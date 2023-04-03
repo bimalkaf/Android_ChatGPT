@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -36,7 +37,9 @@ public class MainActivity extends AppCompatActivity {
     MessageAdapter messageAdapter;
     public static final MediaType JSON
             = MediaType.get("application/json; charset=utf-8");
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient client = new OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,16 +90,24 @@ public class MainActivity extends AppCompatActivity {
 
         JSONObject jsonBody = new JSONObject();
         try {
-            jsonBody.put("model","text-davinci-003");
-            jsonBody.put("prompt",question);
-            jsonBody.put("max_tokens",4000);
-            jsonBody.put("temperature",0);
+            jsonBody.put("model","gpt-3.5-turbo");
+
+            JSONArray messageArr = new JSONArray();
+            JSONObject obj = new JSONObject();
+            obj.put("role","user");
+            obj.put("content",question);
+            messageArr.put(obj);
+
+            jsonBody.put("messages",messageArr);
+
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
         RequestBody body = RequestBody.create(jsonBody.toString(),JSON);
         Request request = new Request.Builder()
-                .url("https://api.openai.com/v1/completions")
+                .url("\n" +
+                        "https://api.openai.com/v1/chat/completions")
                 .header("Authorization","Bearer YOUR_API_KEY")
                 .post(body)
                 .build();
@@ -114,7 +125,9 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         jsonObject = new JSONObject(response.body().string());
                         JSONArray jsonArray = jsonObject.getJSONArray("choices");
-                        String result = jsonArray.getJSONObject(0).getString("text");
+                        String result = jsonArray.getJSONObject(0)
+                                        .getJSONObject("message")
+                                                .getString("content");
                         addResponse(result.trim());
                     } catch (JSONException e) {
                         e.printStackTrace();

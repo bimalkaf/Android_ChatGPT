@@ -19,6 +19,7 @@
             android:id="@+id/left_chat_text_view"
             android:textColor="@color/white"
             android:textSize="18sp"
+            android:textIsSelectable="true"
            />
     </LinearLayout>
     <LinearLayout
